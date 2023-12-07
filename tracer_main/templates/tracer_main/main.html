@@ -1,0 +1,30 @@
+
+<body>
+    <div class="shape_window">
+        <div class="shape_input">
+            <div class="new">
+                <form method="post">
+                    {% csrf_token %}
+                    <label>NAME: </label>
+                    <input type="text" name="name" />
+                    <select name="shape_type">
+                        <option selected value="default">SELECT TYPE</option>
+                        <option value="projectile">PROJECTILE</option>
+                        <option value="clock">CLOCK</option>
+                    </select>
+                    <button>SUBMIT</button>
+                </form>
+            </div>       
+        </div>
+        <div id="content">
+            <img src="data:image/png;base64,{{ graphic|safe }}">
+        </div>
+    </div>
+</body>
+
+<style type="text/css">
+    .shape_window {
+        margin: 10px;
+        padding: 10px;
+    }
+</style>
