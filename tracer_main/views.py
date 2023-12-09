@@ -14,6 +14,9 @@ def main(request):
                     context = {"graphic" : base64.b64encode(ProjectileService().fire(name, 550, 900)).decode('utf-8')}
                 case "clock":
                     context = {"graphic" : base64.b64encode(ClockService().run(name, 500, 500)).decode('utf-8')}
+
+                case "circle":
+                    context = {"graphic" : base64.b64encode(CircleService().run(name)).decode('utf-8')}
                 
             
     return render(request, "tracer_main/main.html", context)

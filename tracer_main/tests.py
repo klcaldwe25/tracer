@@ -214,6 +214,7 @@ class RayTestCase(TestCase):
         self.assertTrue(r.position(2.5).equal(PointDAO(4.5, 3, 4)))   
 
 class SphereTestCase(TestCase):
+    # These are broken now
     def testIntersect(self):
         r1 = RayDAO(PointDAO(0, 0, -5), VectorDAO(0, 0, 1))
         s1 = SphereDAO()     

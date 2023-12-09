@@ -52,3 +52,36 @@ class ClockService:
             canvas.set_pixel(round(scaled_point.tuple[0]), round(scaled_point.tuple[1])-1, [1, 0, 0])
 
         return canvas.create_img()
+    
+class CircleService:
+    def run(self, name):
+        ray_origin = PointDAO(0, 0, -5)
+        wall_z = 10
+        wall_size = 7
+        canvas_pixels = 100
+        pixel_size = wall_size / canvas_pixels
+        half = wall_size / 2
+        color = ColorDAO(1, 0, 0)
+
+        canvas = CanvasDAO(name, canvas_pixels, canvas_pixels)
+        shape = SphereDAO()
+
+        for y in range(0, canvas_pixels-1):
+            world_y = half - pixel_size * y
+            for x in range(0, canvas_pixels-1):
+                world_x = -half + pixel_size * x
+                position = PointDAO(world_x, world_y, wall_z)
+                r = RayDAO(ray_origin, position.subtract(ray_origin).norm())
+                xs = shape.intersect(r)
+
+                if xs:
+                    canvas.set_pixel(x, y, color.tuple)
+
+        return canvas.create_img()
+
+
+
+
+
+                
+

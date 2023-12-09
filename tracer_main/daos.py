@@ -176,6 +176,10 @@ class PointDAO(TupleDAO):
 class VectorDAO(TupleDAO):
     def __init__(self, x, y, z):
         self.tuple = np.array([x, y, z, 0])
+
+class ColorDAO(TupleDAO):
+    def __init__(self, r, g, b):
+        self.tuple = np.array([r, g, b])
         
 class CanvasDAO:
     name : str
@@ -235,14 +239,13 @@ class SphereDAO:
         b = r2.direction.dot(sphere_to_ray) * 2
         c = sphere_to_ray.dot(sphere_to_ray) - 1
         d = b**2 - 4 * a * c
-
         if d < 0:
             return np.array([])
 
         else:
             t1 = (-b - sqrt(d)) / (2 * a)
             t2 = (-b + sqrt(d)) / (2 * a)
-            return np.array([t1, t2])
+            return Intersections([Intersection(t1, self), Intersection(t2, self)])
 
 class Intersection:
     obj : SphereDAO
