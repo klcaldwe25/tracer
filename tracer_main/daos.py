@@ -40,8 +40,34 @@ class MatrixDAO:
         try:    
             return MatrixDAO(np.linalg.inv(self.matrix))
         except:
-            return "Not invertible"           
+            return "Not invertible"  
 
+    def scale(self, x, y, z, inverse=False):
+        if inverse:
+            return ScalingMatrix(x, y, z).inverse().multiply(self)
+        
+        return ScalingMatrix(x, y, z).multiply(self)  
+           
+    def rotate_x(self, r, inverse=False):
+        if inverse:
+            return RotateX(r).inverse().multiply(self)
+
+        return RotateX(r).multiply(self)
+    
+    def rotate_y(self, r, inverse=False):
+        if inverse:
+            return RotateY(r).inverse().multiply(self)
+
+        return RotateY(r).multiply(self)
+
+    def rotate_z(self, r, inverse=False):
+        if inverse:
+            return RotateZ(r).inverse().multiply(self)
+
+        return RotateZ(r).multiply(self)
+    def shear(self, xy, xz, yx, yz, zx, zy):
+        return ShearingMatrix(xy, xz, yx, yz, zx, zy).multiply(self) 
+        
 class IdentityMatrix(MatrixDAO):
     def __init__(self):
         self.matrix = np.array([[1, 0, 0, 0],
@@ -182,15 +208,11 @@ class ColorDAO(TupleDAO):
         self.tuple = np.array([r, g, b])
         
 class CanvasDAO:
-    name : str
-    height : int
-    width : int
+    height : int = 500
+    width : int = 500
     canvas : np.ndarray
 
-    def __init__(self, name, height, width):
-        self.name = name
-        self.height = height
-        self.width = width
+    def __init__(self):
         self.canvas = np.zeros((self.height, self.width, 3))
 
     def get_pixel(self, x, y):
@@ -220,12 +242,11 @@ class RayDAO:
         return RayDAO(matrix.multiply(self.origin), matrix.multiply(self.direction))
     
 class SphereDAO:
-    center : PointDAO
+    center : PointDAO = PointDAO(0, 0, 0)
     transform : MatrixDAO
 
-    def __init__(self):
-        self.center = PointDAO(0, 0, 0)
-        self.transform = IdentityMatrix()
+    def __init__(self, transform = IdentityMatrix()):
+        self.transform = transform
 
     def set_transform(self, transform : MatrixDAO):
         self.transform = transform

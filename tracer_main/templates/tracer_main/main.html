@@ -1,23 +1,57 @@
 
 <body>
     <div class="shape_window">
-        <div class="shape_input">
-            <div class="new">
-                <form method="post">
-                    {% csrf_token %}
-                    <label>NAME: </label>
-                    <input type="text" name="name" />
-                    <select name="shape_type">
-                        <option selected value="default">SELECT TYPE</option>
-                        <option value="projectile">PROJECTILE</option>
-                        <option value="clock">CLOCK</option>
-                        <option value="circle">CIRCLE</option>
-                    </select>
-                    <button>SUBMIT</button>
-                </form>
-            </div>       
+        <div class="shape_params column">
+            <form method="post">
+                {% csrf_token %}
+                <div class="shape_type row">
+                    <h2>SHAPE</h2>
+                    <div class="row">
+                        <label>TYPE: </label>
+                        <select class="shape_input" name="shape_type">
+                            <option selected value="circle">CIRCLE</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="shape_scale row">
+                    <h2>SCALE</h2>                 
+                    <div class="row">
+                        <label>X:</label>
+                        <input class="shape_input" type="number" step="0.1" max="1" min="0" name="scale_x" onkeydown="return false">
+                    </div>
+                    <div class="row">
+                        <label>Y:</label>
+                        <input class="shape_input" type="number" step="0.1" max="1" min="0" name="scale_y" onkeydown="return false">
+                    </div>
+                    <div class="row">
+                        <label>Z:</label>
+                        <input class="shape_input" type="number" step="0.1" max="1" min="0" name="scale_z" onkeydown="return false">
+                    </div>                                                         
+                </div>
+                <div class="shape_rotate row">
+                    <h2>ROTATE</h2>                 
+                    <div class="row">
+                        <label>X:</label>
+                        <input class="shape_input" type="number" step="1" max="10" min="0" name="rotate_x" onkeydown="return false">
+                    </div>
+                    <div class="row">
+                        <label>Y:</label>
+                        <input class="shape_input" type="number" step="1" max="10" min="0" name="rotate_y" onkeydown="return false">
+                    </div>
+                    <div class="row">
+                        <label>Z:</label>
+                        <input class="shape_input" type="number" step="1" max="10" min="0" name="rotate_z" onkeydown="return false">
+                    </div>                                                         
+                </div>                
+                <div class="row">
+                    <h2>SUBMIT</h2>
+                    <div class="shape_btn">
+                        <button>SUBMIT</button>
+                    </div>
+                </div>
+            </form>       
         </div>
-        <div id="content">
+        <div id="content" class="shape_img column">
             <img src="data:image/png;base64,{{ graphic|safe }}">
         </div>
     </div>
@@ -28,4 +62,29 @@
         margin: 10px;
         padding: 10px;
     }
+    .row {
+        margin: 5px;
+    }
+    .column {
+        float: left;
+    }
+    .shape_params {
+        width: 30%;
+    }
+    .shape_input {
+        width: 50%;
+    }
+    .shape_img {
+        width: 70%;
+    }
+    .shape_name {
+        margin: 5px;
+    }
+    .shape_type {
+        margin: 5px;
+    }
+    .shape_btn {
+        margin: 5px;
+    }
+
 </style>
