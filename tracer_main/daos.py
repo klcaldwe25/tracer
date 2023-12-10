@@ -25,7 +25,7 @@ class MatrixDAO:
         self.matrix[row][col] = val
 
     def equal(self, other):
-        return np.allclose(self.matrix, other.matrix)    
+        return np.allclose(self.matrix, other.matrix, 0.00001, 0.00001)    
 
     def multiply(self, other):       
         if isinstance(other, MatrixDAO):
@@ -41,6 +41,12 @@ class MatrixDAO:
             return MatrixDAO(np.linalg.inv(self.matrix))
         except:
             return "Not invertible"  
+        
+    def translate(self, x, y, z, inverse=False):
+        if inverse:
+            return TranslationMatrix(x, y, z).inverse().multiply(self)
+        
+        return TranslationMatrix(x, y, z).multiply(self)        
 
     def scale(self, x, y, z, inverse=False):
         if inverse:
@@ -160,7 +166,10 @@ class TupleDAO:
             return TupleDAO(np.append(np.cross(self.tuple[:3], other.tuple[:3]), 0))      
     
     def equal(self, other):
-        return np.allclose(self.tuple, other.tuple)
+        return np.allclose(self.tuple, other.tuple, 0.00001, 0.00001)
+    
+    def reflect(self, other):
+        return TupleDAO(self.subtract(other.multiply(self.dot(other)).multiply(2)).tuple)
 
     def translate(self, x, y, z, inverse=False):
         if inverse:
@@ -219,6 +228,13 @@ class CanvasDAO:
         return self.canvas[y][x]
     
     def set_pixel(self, x, y, pixel):
+        if pixel[0] > 1:
+            pixel[0] = 1
+        if pixel[1] > 1: 
+            pixel[1] = 1
+        if pixel[2] > 1:
+            pixel[2] = 1
+            
         self.canvas[y][x] = np.array(pixel)
 
     def create_img(self):
@@ -241,15 +257,61 @@ class RayDAO:
     def transform(self, matrix : MatrixDAO):
         return RayDAO(matrix.multiply(self.origin), matrix.multiply(self.direction))
     
+class LightDAO:
+    intensity : ColorDAO
+    position : PointDAO
+
+    def __init__(self, position : PointDAO, intensity : ColorDAO):
+        self.position = position      
+        self.intensity = intensity
+
+class MaterialDAO:
+    color : ColorDAO
+    ambient : float
+    diffuse : float
+    specular : float
+    shininess : float
+
+    def __init__(self, color=ColorDAO(1, 1, 1), ambient=0.1, diffuse=0.9, specular=0.9, shininess=200.0):
+        self.color = color
+        self.ambient = ambient
+        self.diffuse = diffuse
+        self.specular = specular
+        self.shininess = shininess
+
+    def lighting(self, light : LightDAO, point : PointDAO, eyev : VectorDAO, normalv : VectorDAO):
+        effective_color = self.color.multiply(light.intensity)
+        lightv = light.position.subtract(point).norm()
+        ambient = effective_color.multiply(self.ambient)
+        light_dot_normal = lightv.dot(normalv)
+
+        if light_dot_normal >= 0:
+            diffuse = effective_color.multiply(self.diffuse).multiply(light_dot_normal)
+            reflectv = lightv.negate().reflect(normalv)
+            reflect_dot_eye = reflectv.dot(eyev)
+
+            if reflect_dot_eye > 0:
+                factor = reflect_dot_eye ** self.shininess
+                specular = light.intensity.multiply(self.specular).multiply(factor)
+            else:
+                specular = ColorDAO(0, 0, 0)
+
+        else:
+            diffuse = ColorDAO(0, 0, 0)
+            specular = ColorDAO(0, 0, 0)
+
+        return ambient.add(diffuse).add(specular)
+
+
+
 class SphereDAO:
     center : PointDAO = PointDAO(0, 0, 0)
     transform : MatrixDAO
+    material : MaterialDAO
 
-    def __init__(self, transform = IdentityMatrix()):
+    def __init__(self, transform = IdentityMatrix(), material = MaterialDAO()):
         self.transform = transform
-
-    def set_transform(self, transform : MatrixDAO):
-        self.transform = transform
+        self.material = material
 
     def intersect(self, ray : RayDAO):
         r2 = ray.transform(self.transform.inverse())
@@ -261,12 +323,19 @@ class SphereDAO:
         c = sphere_to_ray.dot(sphere_to_ray) - 1
         d = b**2 - 4 * a * c
         if d < 0:
-            return np.array([])
+            return Intersections([])
 
         else:
             t1 = (-b - sqrt(d)) / (2 * a)
             t2 = (-b + sqrt(d)) / (2 * a)
             return Intersections([Intersection(t1, self), Intersection(t2, self)])
+        
+    def normal_at(self, world_point : PointDAO):
+        object_point = self.transform.inverse().multiply(world_point)
+        object_normal = object_point.subtract(self.center)
+        world_normal = self.transform.inverse().transpose().multiply(object_normal)
+        world_normal.tuple[3] = 0
+        return world_normal.norm()
 
 class Intersection:
     obj : SphereDAO
@@ -284,6 +353,8 @@ class Intersections:
 
     def hit(self):
         return min(filter(lambda x: x.t > 0, self.intersections), key=lambda x: x.t, default=None)
+
+
 
     
 

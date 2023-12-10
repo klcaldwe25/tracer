@@ -37,6 +37,9 @@ class CircleService:
             self.transform_matrix = self.transform_matrix.rotate_z(pi/payload["z_val"])                    
 
         shape = SphereDAO(self.transform_matrix)
+        shape.material.color = ColorDAO(1, 0.2, 1)
+
+        light = LightDAO(PointDAO(-10, 10, -10), ColorDAO(1, 1, 1))
 
         for y in range(0, self.canvas_pixels-1):
             world_y = half - pixel_size * y
@@ -46,8 +49,13 @@ class CircleService:
                 r = RayDAO(self.ray_origin, position.subtract(self.ray_origin).norm())
                 xs = shape.intersect(r)
 
-                if xs:
-                    self.canvas.set_pixel(x, y, self.color.tuple)
+                if xs.hit():
+                    hit = xs.hit()
+                    point = r.position(hit.t)
+                    normal = hit.obj.normal_at(point)
+                    eye = r.direction.negate()
+                    color = hit.obj.material.lighting(light, point, eye, normal)
+                    self.canvas.set_pixel(x, y, color.tuple)
 
         return self.canvas.create_img()
 

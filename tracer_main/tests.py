@@ -48,6 +48,11 @@ class TupleTestCase(TestCase):
         self.assertTrue(VectorDAO(1, 2, 3).cross(VectorDAO(2, 3, 4)).equal(VectorDAO(-1, 2, -1)))
         self.assertFalse(VectorDAO(1, 2, 3).cross(VectorDAO(2, 3, 4)).equal(VectorDAO(-1, 2, 1)))
 
+    def testReflect(self):
+        self.assertTrue(VectorDAO(1, -1, 0).reflect(VectorDAO(0, 1, 0)).equal(VectorDAO(1, 1, 0)))
+
+        self.assertTrue(VectorDAO(0, -1, 0).reflect(VectorDAO(sqrt(2)/2, sqrt(2)/2, 0)).equal(VectorDAO(1, 0, 0)))
+
 class MatrixTestCase(TestCase):
     def testOne(self):
         A = MatrixDAO([[1, 2, 3, 4],
@@ -216,39 +221,42 @@ class RayTestCase(TestCase):
 class SphereTestCase(TestCase):
     # These are broken now
     def testIntersect(self):
-        r1 = RayDAO(PointDAO(0, 0, -5), VectorDAO(0, 0, 1))
-        s1 = SphereDAO()     
-        xs1 = s1.intersect(r1)
+        xs1 = SphereDAO().intersect(RayDAO(PointDAO(0, 0, -5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs1[0] == 4.0)
-        self.assertTrue(xs1[1] == 6.0)
+        self.assertTrue(xs1.intersections[0].t == 4.0)
+        self.assertTrue(xs1.intersections[1].t == 6.0)
 
-        r2 = RayDAO(PointDAO(0, 1, -5), VectorDAO(0, 0, 1))
-        s2 = SphereDAO()
-        xs2 = s2.intersect(r2)
+        xs2 = SphereDAO().intersect(RayDAO(PointDAO(0, 1, -5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs2[0] == 5.0)
-        self.assertTrue(xs2[1] == 5.0)
+        self.assertTrue(xs2.intersections[0].t == 5.0)
+        self.assertTrue(xs2.intersections[1].t == 5.0)
 
-        r3 = RayDAO(PointDAO(0, 2, -5), VectorDAO(0, 0, 1))
-        s3 = SphereDAO()
-        xs3 = s3.intersect(r3)
+        xs3 = SphereDAO().intersect(RayDAO(PointDAO(0, 2, -5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs3.size == 0)             
+        self.assertTrue(xs3.intersections.size == 0)             
 
-        r4 = RayDAO(PointDAO(0, 0, 0), VectorDAO(0, 0, 1))
-        s4 = SphereDAO()
-        xs4 = s4.intersect(r4)
+        xs4 = SphereDAO().intersect(RayDAO(PointDAO(0, 0, 0), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs4[0] == -1)
-        self.assertTrue(xs4[1] == 1)
+        self.assertTrue(xs4.intersections[0].t == -1)
+        self.assertTrue(xs4.intersections[1].t == 1)
 
-        r5 = RayDAO(PointDAO(0, 0, 5), VectorDAO(0, 0, 1))
-        s5 = SphereDAO()
-        xs5 = s5.intersect(r5)
+        xs5 = SphereDAO().intersect(RayDAO(PointDAO(0, 0, 5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs5[0] == -6)
-        self.assertTrue(xs5[1] == -4)
+        self.assertTrue(xs5.intersections[0].t == -6)
+        self.assertTrue(xs5.intersections[1].t == -4)
+
+    def testNormalAt(self):
+        self.assertTrue(SphereDAO().normal_at(PointDAO(1, 0, 0)).equal(VectorDAO(1, 0, 0)))
+
+        self.assertTrue(SphereDAO().normal_at(PointDAO(0, 1, 0)).equal(VectorDAO(0, 1, 0))) 
+
+        self.assertTrue(SphereDAO().normal_at(PointDAO(0, 0, 1)).equal(VectorDAO(0, 0, 1))) 
+
+        self.assertTrue(SphereDAO().normal_at(PointDAO(sqrt(3)/3, sqrt(3)/3, sqrt(3)/3)).equal(VectorDAO(sqrt(3)/3, sqrt(3)/3, sqrt(3)/3)))      
+
+        self.assertTrue(SphereDAO(IdentityMatrix().translate(0, 1, 0)).normal_at(PointDAO(0, 1.70711, -0.70711)).equal(VectorDAO(0, 0.70711, -0.70711))) 
+
+        self.assertTrue(SphereDAO(IdentityMatrix().rotate_z(pi/5).scale(1, 0.5, 1)).normal_at(PointDAO(0, sqrt(2)/2, -sqrt(2)/2)).equal(VectorDAO(0, 0.97014, -0.24254)))     
 
 class IntersectionTestCase(TestCase):
     def testIntersections(self):
@@ -286,3 +294,30 @@ class IntersectionTestCase(TestCase):
         xs4 = Intersections([i1_4, i2_4, i3_4, i4_4])  
 
         self.assertTrue(xs4.hit() == i4_4)                 
+
+class MaterialTestCase(TestCase):
+    def testLighting(self):
+        self.assertTrue(MaterialDAO()
+                        .lighting(LightDAO(PointDAO(0, 0, -10), ColorDAO(1, 1, 1)), PointDAO(0, 0, 0), VectorDAO(0, 0, -1), VectorDAO(0, 0, -1))
+                        .equal(ColorDAO(1.9, 1.9, 1.9))
+        )
+        
+        self.assertTrue(MaterialDAO()
+                        .lighting(LightDAO(PointDAO(0, 0, -10), ColorDAO(1, 1, 1)), PointDAO(0, 0, 0), VectorDAO(0, sqrt(2)/2, -sqrt(2)/2), VectorDAO(0, 0, -1))
+                        .equal(ColorDAO(1, 1, 1))
+        )
+
+        self.assertTrue(MaterialDAO()
+                        .lighting(LightDAO(PointDAO(0, 10, -10), ColorDAO(1, 1, 1)), PointDAO(0, 0, 0), VectorDAO(0, 0, -1), VectorDAO(0, 0, -1))
+                        .equal(ColorDAO(0.7364, 0.7364, 0.7364))
+        )
+
+        self.assertTrue(MaterialDAO()
+                        .lighting(LightDAO(PointDAO(0, 10, -10), ColorDAO(1, 1, 1)), PointDAO(0, 0, 0), VectorDAO(0, -sqrt(2)/2, -sqrt(2)/2), VectorDAO(0, 0, -1))
+                        .equal(ColorDAO(1.6364, 1.6364, 1.6364))
+        )                
+
+        self.assertTrue(MaterialDAO()
+                        .lighting(LightDAO(PointDAO(0, 0, 10), ColorDAO(1, 1, 1)), PointDAO(0, 0, 0), VectorDAO(0, 0, -1), VectorDAO(0, 0, -1))
+                        .equal(ColorDAO(0.1, 0.1, 0.1))
+        )
