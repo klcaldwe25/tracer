@@ -130,10 +130,10 @@ class TupleDAO:
     def __init__(self, tuple):
         self.tuple = np.array(tuple)
 
-    def add(self, other):
+    def __add__(self, other):
         return TupleDAO(np.add(self.tuple, other.tuple)) 
     
-    def subtract(self, other):
+    def __sub__(self, other):
         return TupleDAO(np.subtract(self.tuple, other.tuple))
 
     def negate(self):
@@ -169,7 +169,7 @@ class TupleDAO:
         return np.allclose(self.tuple, other.tuple, 0.00001, 0.00001)
     
     def reflect(self, other):
-        return TupleDAO(self.subtract(other * 2 * self.dot(other)).tuple)
+        return TupleDAO((self - (other * 2 * self.dot(other))).tuple)
 
     def translate(self, x, y, z, inverse=False):
         if inverse:
@@ -252,7 +252,7 @@ class RayDAO:
         self.direction = direction
 
     def position(self, t):
-        return self.origin.add(self.direction * t)
+        return self.origin + (self.direction * t)
     
     def transform(self, matrix : MatrixDAO):
         return RayDAO(matrix * self.origin, matrix * self.direction)
@@ -281,7 +281,7 @@ class MaterialDAO:
 
     def lighting(self, light : LightDAO, point : PointDAO, eyev : VectorDAO, normalv : VectorDAO):
         effective_color = self.color * light.intensity
-        lightv = light.position.subtract(point).norm()
+        lightv = (light.position - point).norm()
         ambient = effective_color * self.ambient
         light_dot_normal = lightv.dot(normalv)
 
@@ -300,7 +300,7 @@ class MaterialDAO:
             diffuse = ColorDAO(0, 0, 0)
             specular = ColorDAO(0, 0, 0)
 
-        return ambient.add(diffuse).add(specular)
+        return ambient + diffuse + specular
 
 class SphereDAO:
     center : PointDAO = PointDAO(0, 0, 0)
@@ -314,7 +314,7 @@ class SphereDAO:
     def intersect(self, ray : RayDAO):
         r2 = ray.transform(~self.transform)
 
-        sphere_to_ray = r2.origin.subtract(self.center)
+        sphere_to_ray = r2.origin - self.center
 
         a = r2.direction.dot(r2.direction)
         b = r2.direction.dot(sphere_to_ray) * 2
@@ -331,7 +331,7 @@ class SphereDAO:
         
     def normal_at(self, world_point : PointDAO):
         object_point = ~self.transform * world_point
-        object_normal = object_point.subtract(self.center)
+        object_normal = object_point - self.center
         world_normal = ~self.transform.transpose() * object_normal
         world_normal.tuple[3] = 0
         return world_normal.norm()
@@ -422,7 +422,7 @@ class PointOfView:
         self.up = up
 
     def transform(self, msg=""):
-        forward = self.to.subtract(self.frm).norm()
+        forward = (self.to - self.frm).norm()
         upn = self.up.norm()
         left = forward.cross(upn)
         true_up = left.cross(forward)

@@ -10,12 +10,12 @@ class TupleTestCase(TestCase):
         self.assertFalse(PointDAO(1.00001, 2, 3) == PointDAO(1.1, 2, 3))
 
     def testTwo(self):
-        self.assertTrue(VectorDAO(3, -2, 5).add(VectorDAO(-2, 3, 1)) == VectorDAO(1, 1, 6))
-        self.assertFalse(VectorDAO(3, -2, 5).add(VectorDAO(-2, 3, 1)) == VectorDAO(1.1, 1, 6))
+        self.assertTrue(VectorDAO(3, -2, 5) + VectorDAO(-2, 3, 1) == VectorDAO(1, 1, 6))
+        self.assertFalse(VectorDAO(3, -2, 5) + VectorDAO(-2, 3, 1) == VectorDAO(1.1, 1, 6))
 
     def testThree(self):
-        self.assertTrue(PointDAO(3, 2, 1).subtract(PointDAO(5, 6, 7)) == VectorDAO(-2, -4, -6))
-        self.assertFalse(PointDAO(3, 2, 1).subtract(PointDAO(5, 6, 7)) == VectorDAO(-2.1, -4, -6))
+        self.assertTrue(PointDAO(3, 2, 1) - PointDAO(5, 6, 7) == VectorDAO(-2, -4, -6))
+        self.assertFalse(PointDAO(3, 2, 1) - PointDAO(5, 6, 7) == VectorDAO(-2.1, -4, -6))
 
     def testFour(self):
         self.assertTrue(VectorDAO(1, -2, 3).negate() == VectorDAO(-1, 2, -3))
