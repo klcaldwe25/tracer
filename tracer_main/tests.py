@@ -157,7 +157,7 @@ class MatrixTestCase(TestCase):
 
         C = A * B
 
-        self.assertTrue((C * B.inverse()) == A)
+        self.assertTrue((C * ~B) == A)
 
 
     def testTranslation(self):

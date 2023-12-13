@@ -35,40 +35,40 @@ class MatrixDAO:
 
     def transpose(self):
         return MatrixDAO(self.matrix.transpose())
-    
-    def inverse(self):
-        try:    
+
+    def __invert__(self):
+        try:
             return MatrixDAO(np.linalg.inv(self.matrix))
         except:
-            return "Not invertible"  
+            return "Not invertible" 
         
     def translate(self, x, y, z, inverse=False):
         if inverse:
-            return self * TranslationMatrix(x, y, z).inverse()
+            return self * ~TranslationMatrix(x, y, z)
 
         return self * TranslationMatrix(x, y, z)   
 
     def scale(self, x, y, z, inverse=False):
         if inverse:
-            return self * ScalingMatrix(x, y, z).inverse()
+            return self * ~ScalingMatrix(x, y, z)
         
         return self * ScalingMatrix(x, y, z)
            
     def rotate_x(self, r, inverse=False):
         if inverse:
-            return self * RotateX(r).inverse()
+            return self * ~RotateX(r)
 
         return self * RotateX(r)
     
     def rotate_y(self, r, inverse=False):
         if inverse:
-            return self * RotateY(r).inverse()
+            return self * ~RotateY(r)
 
         return RotateY(r) * self
 
     def rotate_z(self, r, inverse=False):
         if inverse:
-            return self * RotateZ(r).inverse()
+            return self * ~RotateZ(r)
 
         return self * RotateZ(r)
     
@@ -173,31 +173,31 @@ class TupleDAO:
 
     def translate(self, x, y, z, inverse=False):
         if inverse:
-            return self * TranslationMatrix(x, y, z).inverse()
+            return self * ~TranslationMatrix(x, y, z)
         
         return self * TranslationMatrix(x, y, z)
     
     def scale(self, x, y, z, inverse=False):
         if inverse:
-            return self * ScalingMatrix(x, y, z).inverse()
+            return self * ~ScalingMatrix(x, y, z)
         
         return self * ScalingMatrix(x, y, z)
     
     def rotate_x(self, r, inverse=False):
         if inverse:
-            return self * RotateX(r).inverse()
+            return self * ~RotateX(r)
 
         return self * RotateX(r)
     
     def rotate_y(self, r, inverse=False):
         if inverse:
-            return self * RotateY(r).inverse()
+            return self * ~RotateY(r)
 
         return self * RotateY(r)
 
     def rotate_z(self, r, inverse=False):
         if inverse:
-            return self * RotateZ(r).inverse()
+            return self * ~RotateZ(r)
 
         return self * RotateZ(r)
 
@@ -312,7 +312,7 @@ class SphereDAO:
         self.material = material
 
     def intersect(self, ray : RayDAO):
-        r2 = ray.transform(self.transform.inverse())
+        r2 = ray.transform(~self.transform)
 
         sphere_to_ray = r2.origin.subtract(self.center)
 
@@ -330,9 +330,9 @@ class SphereDAO:
             return [Intersection(t1, self), Intersection(t2, self)]
         
     def normal_at(self, world_point : PointDAO):
-        object_point = self.transform.inverse() * world_point
+        object_point = ~self.transform * world_point
         object_normal = object_point.subtract(self.center)
-        world_normal = self.transform.inverse().transpose() * object_normal
+        world_normal = ~self.transform.transpose() * object_normal
         world_normal.tuple[3] = 0
         return world_normal.norm()
 
