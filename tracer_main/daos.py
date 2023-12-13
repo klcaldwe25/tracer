@@ -1,10 +1,10 @@
 from io import BytesIO
-from .models import Canvas
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from math import cos, sin, sqrt
+
 
 class MatrixDAO:
     matrix : np.ndarray
@@ -24,14 +24,14 @@ class MatrixDAO:
     def set_element(self, row, col, val):
         self.matrix[row][col] = val
 
-    def equal(self, other):
+    def __eq__(self, other):
         return np.allclose(self.matrix, other.matrix, 0.00001, 0.00001)    
 
-    def multiply(self, other):       
+    def __mul__(self, other):
         if isinstance(other, MatrixDAO):
-            return MatrixDAO(np.matmul(self.matrix, other.matrix)) 
+            return MatrixDAO(self.matrix @ other.matrix)
         elif isinstance(other, TupleDAO):
-            return TupleDAO(np.ravel(np.matmul(self.matrix, other.tuple.reshape(-1,1)).reshape(1, -1))) 
+            return TupleDAO(np.ravel((self.matrix @ other.tuple.reshape(-1,1)).reshape(1, -1))) 
 
     def transpose(self):
         return MatrixDAO(self.matrix.transpose())
@@ -44,35 +44,36 @@ class MatrixDAO:
         
     def translate(self, x, y, z, inverse=False):
         if inverse:
-            return TranslationMatrix(x, y, z).inverse().multiply(self)
-        
-        return TranslationMatrix(x, y, z).multiply(self)        
+            return self * TranslationMatrix(x, y, z).inverse()
+
+        return self * TranslationMatrix(x, y, z)   
 
     def scale(self, x, y, z, inverse=False):
         if inverse:
-            return ScalingMatrix(x, y, z).inverse().multiply(self)
+            return self * ScalingMatrix(x, y, z).inverse()
         
-        return ScalingMatrix(x, y, z).multiply(self)  
+        return self * ScalingMatrix(x, y, z)
            
     def rotate_x(self, r, inverse=False):
         if inverse:
-            return RotateX(r).inverse().multiply(self)
+            return self * RotateX(r).inverse()
 
-        return RotateX(r).multiply(self)
+        return self * RotateX(r)
     
     def rotate_y(self, r, inverse=False):
         if inverse:
-            return RotateY(r).inverse().multiply(self)
+            return self * RotateY(r).inverse()
 
-        return RotateY(r).multiply(self)
+        return RotateY(r) * self
 
     def rotate_z(self, r, inverse=False):
         if inverse:
-            return RotateZ(r).inverse().multiply(self)
+            return self * RotateZ(r).inverse()
 
-        return RotateZ(r).multiply(self)
+        return self * RotateZ(r)
+    
     def shear(self, xy, xz, yx, yz, zx, zy):
-        return ShearingMatrix(xy, xz, yx, yz, zx, zy).multiply(self) 
+        return self * ShearingMatrix(xy, xz, yx, yz, zx, zy)
         
 class IdentityMatrix(MatrixDAO):
     def __init__(self):
@@ -138,11 +139,11 @@ class TupleDAO:
     def negate(self):
         return TupleDAO(np.negative(self.tuple))
 
-    def multiply(self, other):
+    def __mul__(self, other):
         if isinstance(other, TupleDAO):
             return TupleDAO(np.multiply(self.tuple, other.tuple))
         elif isinstance(other, MatrixDAO):
-            return TupleDAO(np.ravel(np.matmul(other.matrix, self.tuple.reshape(-1,1)).reshape(1, -1))) 
+            return TupleDAO(np.ravel((other.matrix @ self.tuple.reshape(-1,1)).reshape(1, -1))) 
         else:
             return TupleDAO(self.tuple * other)  
 
@@ -162,47 +163,46 @@ class TupleDAO:
         return np.dot(self.tuple, other.tuple)
     
     def cross(self, other):
-        if isinstance(other, VectorDAO):
-            return TupleDAO(np.append(np.cross(self.tuple[:3], other.tuple[:3]), 0))      
+        return TupleDAO(np.append(np.cross(self.tuple[:3], other.tuple[:3]), 0))      
     
-    def equal(self, other):
+    def __eq__(self, other):
         return np.allclose(self.tuple, other.tuple, 0.00001, 0.00001)
     
     def reflect(self, other):
-        return TupleDAO(self.subtract(other.multiply(self.dot(other)).multiply(2)).tuple)
+        return TupleDAO(self.subtract(other * 2 * self.dot(other)).tuple)
 
     def translate(self, x, y, z, inverse=False):
         if inverse:
-            return TranslationMatrix(x, y, z).inverse().multiply(self)
+            return self * TranslationMatrix(x, y, z).inverse()
         
-        return TranslationMatrix(x, y, z).multiply(self)
+        return self * TranslationMatrix(x, y, z)
     
     def scale(self, x, y, z, inverse=False):
         if inverse:
-            return ScalingMatrix(x, y, z).inverse().multiply(self)
+            return self * ScalingMatrix(x, y, z).inverse()
         
-        return ScalingMatrix(x, y, z).multiply(self)
+        return self * ScalingMatrix(x, y, z)
     
     def rotate_x(self, r, inverse=False):
         if inverse:
-            return RotateX(r).inverse().multiply(self)
+            return self * RotateX(r).inverse()
 
-        return RotateX(r).multiply(self)
+        return self * RotateX(r)
     
     def rotate_y(self, r, inverse=False):
         if inverse:
-            return RotateY(r).inverse().multiply(self)
+            return self * RotateY(r).inverse()
 
-        return RotateY(r).multiply(self)
+        return self * RotateY(r)
 
     def rotate_z(self, r, inverse=False):
         if inverse:
-            return RotateZ(r).inverse().multiply(self)
+            return self * RotateZ(r).inverse()
 
-        return RotateZ(r).multiply(self)
+        return self * RotateZ(r)
 
     def shear(self, xy, xz, yx, yz, zx, zy):
-        return ShearingMatrix(xy, xz, yx, yz, zx, zy).multiply(self) 
+        return self * ShearingMatrix(xy, xz, yx, yz, zx, zy)
         
 class PointDAO(TupleDAO):
     def __init__(self, x, y, z):
@@ -215,7 +215,7 @@ class VectorDAO(TupleDAO):
 class ColorDAO(TupleDAO):
     def __init__(self, r, g, b):
         self.tuple = np.array([r, g, b])
-        
+
 class CanvasDAO:
     height : int = 500
     width : int = 500
@@ -234,7 +234,7 @@ class CanvasDAO:
             pixel[1] = 1
         if pixel[2] > 1:
             pixel[2] = 1
-            
+
         self.canvas[y][x] = np.array(pixel)
 
     def create_img(self):
@@ -252,10 +252,10 @@ class RayDAO:
         self.direction = direction
 
     def position(self, t):
-        return self.origin.add(self.direction.multiply(t))
+        return self.origin.add(self.direction * t)
     
     def transform(self, matrix : MatrixDAO):
-        return RayDAO(matrix.multiply(self.origin), matrix.multiply(self.direction))
+        return RayDAO(matrix * self.origin, matrix * self.direction)
     
 class LightDAO:
     intensity : ColorDAO
@@ -280,19 +280,19 @@ class MaterialDAO:
         self.shininess = shininess
 
     def lighting(self, light : LightDAO, point : PointDAO, eyev : VectorDAO, normalv : VectorDAO):
-        effective_color = self.color.multiply(light.intensity)
+        effective_color = self.color * light.intensity
         lightv = light.position.subtract(point).norm()
-        ambient = effective_color.multiply(self.ambient)
+        ambient = effective_color * self.ambient
         light_dot_normal = lightv.dot(normalv)
 
         if light_dot_normal >= 0:
-            diffuse = effective_color.multiply(self.diffuse).multiply(light_dot_normal)
+            diffuse = effective_color * self.diffuse * light_dot_normal
             reflectv = lightv.negate().reflect(normalv)
             reflect_dot_eye = reflectv.dot(eyev)
 
             if reflect_dot_eye > 0:
                 factor = reflect_dot_eye ** self.shininess
-                specular = light.intensity.multiply(self.specular).multiply(factor)
+                specular = light.intensity * self.specular * factor
             else:
                 specular = ColorDAO(0, 0, 0)
 
@@ -301,8 +301,6 @@ class MaterialDAO:
             specular = ColorDAO(0, 0, 0)
 
         return ambient.add(diffuse).add(specular)
-
-
 
 class SphereDAO:
     center : PointDAO = PointDAO(0, 0, 0)
@@ -322,20 +320,37 @@ class SphereDAO:
         b = r2.direction.dot(sphere_to_ray) * 2
         c = sphere_to_ray.dot(sphere_to_ray) - 1
         d = b**2 - 4 * a * c
+        
         if d < 0:
-            return Intersections([])
+            return []
 
         else:
             t1 = (-b - sqrt(d)) / (2 * a)
             t2 = (-b + sqrt(d)) / (2 * a)
-            return Intersections([Intersection(t1, self), Intersection(t2, self)])
+            return [Intersection(t1, self), Intersection(t2, self)]
         
     def normal_at(self, world_point : PointDAO):
-        object_point = self.transform.inverse().multiply(world_point)
+        object_point = self.transform.inverse() * world_point
         object_normal = object_point.subtract(self.center)
-        world_normal = self.transform.inverse().transpose().multiply(object_normal)
+        world_normal = self.transform.inverse().transpose() * object_normal
         world_normal.tuple[3] = 0
         return world_normal.norm()
+
+class IntersectionPreCompute:
+    t : float
+    obj : SphereDAO
+    point : PointDAO
+    eyev : VectorDAO
+    normalv : VectorDAO
+    inside : bool
+
+    def __init__(self, t : float, obj : SphereDAO, point : PointDAO, eyev : VectorDAO, normalv : VectorDAO, inside : bool):
+        self.t = t
+        self.obj = obj
+        self.point = point
+        self.eyev = eyev
+        self.normalv = normalv
+        self.inside = inside
 
 class Intersection:
     obj : SphereDAO
@@ -344,6 +359,20 @@ class Intersection:
     def __init__(self, t, obj):
         self.obj = obj
         self.t = t
+
+    def pre_compute(self, r : RayDAO):
+        t = self.t
+        obj = self.obj
+        point = r.position(self.t)
+        eyev = r.direction.negate()
+        normalv = self.obj.normal_at(point)
+        inside = False
+
+        if normalv.dot(eyev) < 0:
+            inside = True
+            normalv = normalv.negate()
+
+        return IntersectionPreCompute(t, obj, point, eyev, normalv, inside)
 
 class Intersections:
     intersections : np.array([Intersection])
@@ -354,7 +383,56 @@ class Intersections:
     def hit(self):
         return min(filter(lambda x: x.t > 0, self.intersections), key=lambda x: x.t, default=None)
 
+class WorldDAO:
+    light : LightDAO
+    spheres : [SphereDAO]
 
+    def __init__(self, 
+                 light=LightDAO(PointDAO(-10, 10, -10), ColorDAO(1, 1, 1)), 
+                 spheres=[SphereDAO(material = MaterialDAO(color=ColorDAO(0.8, 1.0, 0.6), diffuse=0.7, specular=0.2)), SphereDAO(IdentityMatrix().scale(0.5, 0.5, 0.5))]):
+        self.light = light
+        self.spheres = spheres
+
+    def intersect_world(self, r : RayDAO):
+        intersections = []
+
+        for s in self.spheres:
+            intersections.append(s.intersect(r))
+
+        return Intersections(sorted(list(np.array(intersections).ravel()), key=lambda x: x.t))
+    
+    def shade_hit(self, pc : IntersectionPreCompute):
+        return pc.obj.material.lighting(self.light, pc.point, pc.eyev, pc.normalv)
+    
+    def color_at(self, r : RayDAO):
+        hit = self.intersect_world(r).hit()
+        if hit:
+            return self.shade_hit(hit.pre_compute(r))
+        
+        return ColorDAO(0, 0, 0)
+
+class PointOfView:
+    frm : PointDAO
+    to : PointDAO
+    up : VectorDAO
+
+    def __init__(self, frm : VectorDAO, to, up):
+        self.frm = frm
+        self.to = to
+        self.up = up
+
+    def transform(self, msg=""):
+        forward = self.to.subtract(self.frm).norm()
+        upn = self.up.norm()
+        left = forward.cross(upn)
+        true_up = left.cross(forward)
+
+        return MatrixDAO([[left.tuple[0], left.tuple[1], left.tuple[2], 0],
+                            [true_up.tuple[0], true_up.tuple[1], true_up.tuple[2], 0],
+                            [-forward.tuple[0], -forward.tuple[1], -forward.tuple[2], 0],
+                            [0, 0, 0, 1]]
+                        ).translate(-self.frm.tuple[0], -self.frm.tuple[1], -self.frm.tuple[2])
+        
 
     
 

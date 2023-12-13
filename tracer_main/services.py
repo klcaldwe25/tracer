@@ -47,7 +47,7 @@ class CircleService:
                 world_x = -half + pixel_size * x
                 position = PointDAO(world_x, world_y, wall_z)
                 r = RayDAO(self.ray_origin, position.subtract(self.ray_origin).norm())
-                xs = shape.intersect(r)
+                xs = Intersections(shape.intersect(r))
 
                 if xs.hit():
                     hit = xs.hit()
