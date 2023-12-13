@@ -18,8 +18,8 @@ class TupleTestCase(TestCase):
         self.assertFalse(PointDAO(3, 2, 1) - PointDAO(5, 6, 7) == VectorDAO(-2.1, -4, -6))
 
     def testFour(self):
-        self.assertTrue(VectorDAO(1, -2, 3).negate() == VectorDAO(-1, 2, -3))
-        self.assertFalse(VectorDAO(1, -2, 3).negate() == VectorDAO(-1.1, 2, -3))
+        self.assertTrue(-VectorDAO(1, -2, 3) == VectorDAO(-1, 2, -3))
+        self.assertFalse(-VectorDAO(1, -2, 3) == VectorDAO(-1.1, 2, -3))
 
     def testFive(self):
         self.assertTrue((VectorDAO(1, -2, 3) * 3.5) == VectorDAO(3.5, -7, 10.5))

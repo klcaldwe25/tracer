@@ -136,7 +136,7 @@ class TupleDAO:
     def __sub__(self, other):
         return TupleDAO(np.subtract(self.tuple, other.tuple))
 
-    def negate(self):
+    def __neg__(self):
         return TupleDAO(np.negative(self.tuple))
 
     def __mul__(self, other):
@@ -287,7 +287,7 @@ class MaterialDAO:
 
         if light_dot_normal >= 0:
             diffuse = effective_color * self.diffuse * light_dot_normal
-            reflectv = lightv.negate().reflect(normalv)
+            reflectv = -lightv.reflect(normalv)
             reflect_dot_eye = reflectv.dot(eyev)
 
             if reflect_dot_eye > 0:
@@ -364,13 +364,13 @@ class Intersection:
         t = self.t
         obj = self.obj
         point = r.position(self.t)
-        eyev = r.direction.negate()
+        eyev = -r.direction
         normalv = self.obj.normal_at(point)
         inside = False
 
         if normalv.dot(eyev) < 0:
             inside = True
-            normalv = normalv.negate()
+            normalv = -normalv
 
         return IntersectionPreCompute(t, obj, point, eyev, normalv, inside)
 

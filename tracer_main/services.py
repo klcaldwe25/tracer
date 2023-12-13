@@ -53,7 +53,7 @@ class CircleService:
                     hit = xs.hit()
                     point = r.position(hit.t)
                     normal = hit.obj.normal_at(point)
-                    eye = r.direction.negate()
+                    eye = -r.direction
                     color = hit.obj.material.lighting(light, point, eye, normal)
                     self.canvas.set_pixel(x, y, color.tuple)
 
