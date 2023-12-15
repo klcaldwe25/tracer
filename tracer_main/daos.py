@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from math import cos, sin, sqrt
-
+from math import cos, sin, tan, sqrt
+from decimal import Decimal
 
 class MatrixDAO:
     matrix : np.ndarray
@@ -217,11 +217,13 @@ class ColorDAO(TupleDAO):
         self.tuple = np.array([r, g, b])
 
 class CanvasDAO:
-    height : int = 500
-    width : int = 500
+    height : int
+    width : int
     canvas : np.ndarray
 
-    def __init__(self):
+    def __init__(self, height = 500, width = 500):
+        self.height = height
+        self.width = width
         self.canvas = np.zeros((self.height, self.width, 3))
 
     def get_pixel(self, x, y):
@@ -399,6 +401,7 @@ class WorldDAO:
         for s in self.spheres:
             intersections.append(s.intersect(r))
 
+        print(sorted(list(np.array(intersections).ravel()), key=lambda x: x.t))
         return Intersections(sorted(list(np.array(intersections).ravel()), key=lambda x: x.t))
     
     def shade_hit(self, pc : IntersectionPreCompute):
@@ -416,12 +419,12 @@ class PointOfView:
     to : PointDAO
     up : VectorDAO
 
-    def __init__(self, frm : VectorDAO, to, up):
+    def __init__(self, frm : PointDAO, to : PointDAO, up : VectorDAO):
         self.frm = frm
         self.to = to
         self.up = up
 
-    def transform(self, msg=""):
+    def transform(self):
         forward = (self.to - self.frm).norm()
         upn = self.up.norm()
         left = forward.cross(upn)
@@ -433,7 +436,52 @@ class PointOfView:
                             [0, 0, 0, 1]]
                         ).translate(-self.frm.tuple[0], -self.frm.tuple[1], -self.frm.tuple[2])
         
+class Camera:
+    hsize : int
+    vsize : int
+    field_of_view : float
+    transform : MaterialDAO
+    pixel_size : float
+    half_width : float
+    half_height : float
 
+    def __init__(self, hsize : int, vsize : int, field_of_view : float, transform : MatrixDAO = IdentityMatrix()):
+        self.hsize = hsize
+        self.vsize = vsize
+        self.field_of_view = field_of_view
+        self.transform = transform
+
+        half_view = tan(self.field_of_view / 2)
+        aspect = hsize / vsize
+
+        if aspect >= 1:
+            self.half_width = half_view
+            self.half_height = half_view / aspect
+        else:
+            self.half_width = half_view * aspect
+            self.half_height = half_view
+
+        self.pixel_size = (self.half_width * 2) / self.hsize
+
+    def ray_for_pixel(self, px, py):
+        world_x = self.half_width - ((px + 0.5) * self.pixel_size)
+        world_y = self.half_height - ((py + 0.5) * self.pixel_size)
+
+        pixel = ~self.transform * PointDAO(world_x, world_y, -1)
+        origin = ~self.transform * PointDAO(0, 0, 0)
+        direction = (pixel - origin).norm()
+
+        return RayDAO(origin, direction)
+
+    def render(self, world : WorldDAO):
+        img = CanvasDAO(self.hsize, self.vsize)
+
+        for y in range(self.vsize - 1):
+            for x in range(self.hsize - 1):
+                c = world.color_at(self.ray_for_pixel(x, y))
+                img.set_pixel(x, y, c.tuple)
+
+        return img
     
 
 

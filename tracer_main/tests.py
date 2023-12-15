@@ -1,7 +1,6 @@
 #from django.test import TestCase
 from unittest import TestCase
 from tracer_main.daos import *
-
 from math import sqrt, pi
 
 class TupleTestCase(TestCase):
@@ -381,3 +380,21 @@ class PointOfViewTestCase(TestCase):
                               [0, 0, 0, 1]])
 
         self.assertTrue(PointOfView(PointDAO(1, 3, 2), PointDAO(4, -2, 8), VectorDAO(1, 1, 0)).transform() == result)
+
+class CameraTestCase(TestCase):
+    def testRayForPixels(self):
+        r1 = Camera(201, 101, pi/2).ray_for_pixel(100, 50)
+
+        self.assertTrue(r1.origin == PointDAO(0, 0, 0))
+        self.assertTrue(r1.direction == VectorDAO(0, 0, -1))
+
+        r2 = Camera(201, 101, pi/2).ray_for_pixel(0, 0)
+        self.assertTrue(r2.origin == PointDAO(0, 0, 0))
+        self.assertTrue(r2.direction == VectorDAO(0.66519, 0.33259, -0.66851))
+
+        r3 = Camera(201, 101, pi/2, transform=IdentityMatrix().rotate_y(pi/4).translate(0, -2, 5)).ray_for_pixel(100, 50)
+        self.assertTrue(r3.origin == PointDAO(0, 2, -5))
+        self.assertTrue(r3.direction == VectorDAO(sqrt(2)/2, 0, -sqrt(2)/2))
+
+        c = Camera(11, 11, pi/2, transform=PointOfView(PointDAO(0, 0, -5), PointDAO(0, 0, 0), VectorDAO(0, 1, 0)).transform())
+        img = c.render(WorldDAO())
