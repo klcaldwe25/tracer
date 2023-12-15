@@ -5,7 +5,11 @@ import base64
 def main(request):
     context = {"graphic" : base64.b64encode(InitialService().run()).decode('utf-8')}
     if request.method == "POST":
-        selection = request.POST.get("shape_type")
+        context = {"graphic" : base64.b64encode(CirclesService().run()).decode('utf-8')}   
+
+    return render(request, "tracer_main/main.html", context)
+
+"""
         if selection:
             match selection:
                 case "circle":
@@ -39,5 +43,6 @@ def main(request):
 
                     context = {"graphic" : base64.b64encode(CircleService().run(payload)).decode('utf-8')}
                 
-            
-    return render(request, "tracer_main/main.html", context)
+                case "circles":
+                    context = {"graphic" : base64.b64encode(CirclesService().run()).decode('utf-8')}       
+"""

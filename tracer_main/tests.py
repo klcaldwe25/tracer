@@ -221,29 +221,29 @@ class RayTestCase(TestCase):
 class SphereTestCase(TestCase):
     # These are broken now
     def testIntersect(self):
-        xs1 = Intersections(SphereDAO().intersect(RayDAO(PointDAO(0, 0, -5), VectorDAO(0, 0, 1))))
+        xs1 = SphereDAO().intersect(RayDAO(PointDAO(0, 0, -5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs1.intersections[0].t == 4.0)
-        self.assertTrue(xs1.intersections[1].t == 6.0)
+        self.assertTrue(xs1[0].t == 4.0)
+        self.assertTrue(xs1[1].t == 6.0)
 
-        xs2 = Intersections(SphereDAO().intersect(RayDAO(PointDAO(0, 1, -5), VectorDAO(0, 0, 1))))
+        xs2 = SphereDAO().intersect(RayDAO(PointDAO(0, 1, -5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs2.intersections[0].t == 5.0)
-        self.assertTrue(xs2.intersections[1].t == 5.0)
+        self.assertTrue(xs2[0].t == 5.0)
+        self.assertTrue(xs2[1].t == 5.0)
 
-        xs3 = Intersections(SphereDAO().intersect(RayDAO(PointDAO(0, 2, -5), VectorDAO(0, 0, 1))))
+        xs3 = SphereDAO().intersect(RayDAO(PointDAO(0, 2, -5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs3.intersections.size == 0)             
+        self.assertTrue(len(xs3.data) == 0)             
 
-        xs4 = Intersections(SphereDAO().intersect(RayDAO(PointDAO(0, 0, 0), VectorDAO(0, 0, 1))))
+        xs4 = SphereDAO().intersect(RayDAO(PointDAO(0, 0, 0), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs4.intersections[0].t == -1)
-        self.assertTrue(xs4.intersections[1].t == 1)
+        self.assertTrue(xs4[0].t == -1)
+        self.assertTrue(xs4[1].t == 1)
 
-        xs5 = Intersections(SphereDAO().intersect(RayDAO(PointDAO(0, 0, 5), VectorDAO(0, 0, 1))))
+        xs5 = SphereDAO().intersect(RayDAO(PointDAO(0, 0, 5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs5.intersections[0].t == -6)
-        self.assertTrue(xs5.intersections[1].t == -4)
+        self.assertTrue(xs5[0].t == -6)
+        self.assertTrue(xs5[1].t == -4)
 
     def testNormalAt(self):
         self.assertTrue(SphereDAO().normal_at(PointDAO(1, 0, 0)) == VectorDAO(1, 0, 0))
@@ -263,27 +263,27 @@ class IntersectionTestCase(TestCase):
         i1 = Intersection(1, SphereDAO())
         i2 = Intersection(2, SphereDAO())
 
-        xs = Intersections([i1, i2])
+        xs = Intersections(i1, i2)
 
-        self.assertTrue(xs.intersections[0].t == 1)
-        self.assertTrue(xs.intersections[1].t == 2)
+        self.assertTrue(xs.data[0].t == 1)
+        self.assertTrue(xs.data[1].t == 2)
 
     def testHit(self):
         i1_1 = Intersection(1, SphereDAO())
         i2_1 = Intersection(2, SphereDAO())
-        xs1 = Intersections([i1_1, i2_1])
+        xs1 = Intersections(i1_1, i2_1)
 
         self.assertTrue(xs1.hit() == i1_1)    
 
         i1_2 = Intersection(-1, SphereDAO())
         i2_2 = Intersection(1, SphereDAO())
-        xs2 = Intersections([i1_2, i2_2])  
+        xs2 = Intersections(i1_2, i2_2)  
 
         self.assertTrue(xs2.hit() == i2_2)
 
         i1_3 = Intersection(-1, SphereDAO())
         i2_3 = Intersection(-2, SphereDAO())
-        xs3 = Intersections([i1_3, i2_3])  
+        xs3 = Intersections(i1_3, i2_3)  
 
         self.assertTrue(xs3.hit() == None)   
 
@@ -291,7 +291,7 @@ class IntersectionTestCase(TestCase):
         i2_4 = Intersection(7, SphereDAO())
         i3_4 = Intersection(-3, SphereDAO())
         i4_4 = Intersection(2, SphereDAO())
-        xs4 = Intersections([i1_4, i2_4, i3_4, i4_4])  
+        xs4 = Intersections(i1_4, i2_4, i3_4, i4_4)  
 
         self.assertTrue(xs4.hit() == i4_4)                 
 
@@ -336,10 +336,10 @@ class WorldTestCase(TestCase):
         w = WorldDAO()
         xs = w.intersect_world(RayDAO(PointDAO(0, 0, -5), VectorDAO(0, 0, 1)))
 
-        self.assertTrue(xs.intersections[0].t == 4)
-        self.assertTrue(xs.intersections[1].t == 4.5)
-        self.assertTrue(xs.intersections[2].t == 5.5)
-        self.assertTrue(xs.intersections[3].t == 6)                
+        self.assertTrue(xs[0].t == 4)
+        self.assertTrue(xs[1].t == 4.5)
+        self.assertTrue(xs[2].t == 5.5)
+        self.assertTrue(xs[3].t == 6)                
 
 
     def testShadeHit(self):
@@ -398,3 +398,5 @@ class CameraTestCase(TestCase):
 
         c = Camera(11, 11, pi/2, transform=PointOfView(PointDAO(0, 0, -5), PointDAO(0, 0, 0), VectorDAO(0, 1, 0)).transform())
         img = c.render(WorldDAO())
+
+        self.assertTrue(img.get_pixel(5, 5) == ColorDAO(0.38066, 0.47583, 0.2855))

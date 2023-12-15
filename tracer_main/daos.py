@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from math import cos, sin, tan, sqrt
-from decimal import Decimal
+from collections import UserList
 
 class MatrixDAO:
     matrix : np.ndarray
@@ -216,6 +216,7 @@ class ColorDAO(TupleDAO):
     def __init__(self, r, g, b):
         self.tuple = np.array([r, g, b])
 
+# Need to add that each element of a canvas is a pixel
 class CanvasDAO:
     height : int
     width : int
@@ -227,7 +228,7 @@ class CanvasDAO:
         self.canvas = np.zeros((self.height, self.width, 3))
 
     def get_pixel(self, x, y):
-        return self.canvas[y][x]
+        return ColorDAO(self.canvas[y][x][0], self.canvas[y][x][1], self.canvas[y][x][2])
     
     def set_pixel(self, x, y, pixel):
         if pixel[0] > 1:
@@ -324,12 +325,12 @@ class SphereDAO:
         d = b**2 - 4 * a * c
         
         if d < 0:
-            return []
+            return Intersections()
 
         else:
             t1 = (-b - sqrt(d)) / (2 * a)
             t2 = (-b + sqrt(d)) / (2 * a)
-            return [Intersection(t1, self), Intersection(t2, self)]
+            return Intersections(Intersection(t1, self), Intersection(t2, self))
         
     def normal_at(self, world_point : PointDAO):
         object_point = ~self.transform * world_point
@@ -376,14 +377,13 @@ class Intersection:
 
         return IntersectionPreCompute(t, obj, point, eyev, normalv, inside)
 
-class Intersections:
-    intersections : np.array([Intersection])
-
-    def __init__(self, intersections : [Intersection]):
-        self.intersections = np.array(intersections)
+class Intersections(UserList):
+    def __init__(self, *args):
+        super(Intersections, self).__init__(args)
+        self.sort(key=lambda item: item.t)
 
     def hit(self):
-        return min(filter(lambda x: x.t > 0, self.intersections), key=lambda x: x.t, default=None)
+        return min(filter(lambda x: x.t > 0, self), key=lambda x: x.t, default=None)
 
 class WorldDAO:
     light : LightDAO
@@ -396,13 +396,13 @@ class WorldDAO:
         self.spheres = spheres
 
     def intersect_world(self, r : RayDAO):
-        intersections = []
+        intersections = Intersections()
 
         for s in self.spheres:
-            intersections.append(s.intersect(r))
+            intersections += s.intersect(r)
 
-        print(sorted(list(np.array(intersections).ravel()), key=lambda x: x.t))
-        return Intersections(sorted(list(np.array(intersections).ravel()), key=lambda x: x.t))
+        intersections.sort(key=lambda i: i.t)
+        return intersections
     
     def shade_hit(self, pc : IntersectionPreCompute):
         return pc.obj.material.lighting(self.light, pc.point, pc.eyev, pc.normalv)
@@ -476,8 +476,8 @@ class Camera:
     def render(self, world : WorldDAO):
         img = CanvasDAO(self.hsize, self.vsize)
 
-        for y in range(self.vsize - 1):
-            for x in range(self.hsize - 1):
+        for y in range(0, self.vsize - 1):
+            for x in range(0, self.hsize - 1):
                 c = world.color_at(self.ray_for_pixel(x, y))
                 img.set_pixel(x, y, c.tuple)
 

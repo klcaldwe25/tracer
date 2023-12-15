@@ -59,6 +59,19 @@ class CircleService:
 
         return self.canvas.create_img()
 
+class CirclesService:
+    def run(self):
+        middle_sphere = SphereDAO(transform=IdentityMatrix().translate(0, 0, 0), material=MaterialDAO(color=ColorDAO(0.1, 1, 0.5), diffuse=0.7, specular=0.3))
+        right_sphere = SphereDAO(transform=IdentityMatrix().translate(1.5, 0.5, -0.5).scale(0.5, 0.5, 0.5), material=MaterialDAO(color=ColorDAO(0.5, 1, 0.1), diffuse=0.7, specular=0.3))
+        left_sphere = SphereDAO(IdentityMatrix().translate(-1.5, 0.33, -0.75).scale(0.33, 0.33, 0.33), material=MaterialDAO(color=ColorDAO(1, 0.8, 0.1), diffuse=0.7, specular=0.3))
+
+        world = WorldDAO(spheres=[middle_sphere, right_sphere, left_sphere])
+        camera = Camera(500, 500, pi/3, transform=PointOfView(PointDAO(0, 1.5, -5), PointDAO(0, 1, 0), VectorDAO(0, 1, 0)).transform())
+
+        canvas = camera.render(world)
+
+        return canvas.create_img()
+
 
 
 
